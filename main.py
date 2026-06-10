@@ -34,7 +34,7 @@ class Card:
     def __repr__(self):
         return f"{self.rank.display}{self.suit.value}"
     
-    # function checking if the card is trump 
+    # function checking if the card is trump (kozyr is a polish name for a trump card)
     def is_kozyr(self,trump_suit):
         return self.suit == trump_suit
     
@@ -65,7 +65,7 @@ class Deck:
     
     def deal(self,n=1):
         if n > len(self.cards):
-            return ValueError(f"Only {len(self.cards)} cards left in the deck.")
+            raise ValueError(f"Only {len(self.cards)} cards left in the deck.")
         else:
             dealt = self.cards[:n]
             self.cards=self.cards[n:]
@@ -78,5 +78,50 @@ class Deck:
         return f"Full deck: {self.cards}"
 
 
+# Players' hands
+
+class Hand:
+
+    def __init__(self):
+        self.cards = []
+
+    def add(self,cards):
+        self.cards.extend(cards)
+    
+    def remove(self,card):
+        self.cards.remove(card)
+
+    # return the list of cards that can be played
+    def legal_moves(self,trump,lead_card= None):
+
+        # if you start there is no constraints
+        if lead_card == None:
+            return list(self.cards)
+
+        # following the suit of the top card
+        same_suit = [c for c in self.cards if c.suit == lead_card.suit ]
+
+        if same_suit:
+            return same_suit
+        
+        # now if we have the trump we have to play it
+
+        trump_cards = [c for c in self.cards if c.is_kozyr(trump)]
+
+        if trump_cards:
+            return trump_cards
+        
+        # if none of those work just play anything
+
+        return list(self.cards)
+
+    # enables to call len() on an instance
+    def __len__(self):
+        return len(self.cards)
+    
+    #gives a nice print of an instance
+    def __repr__(self):
+        return f"The hand is {' , '.join(repr(c) for c in self.cards)}"
+            
 
 
