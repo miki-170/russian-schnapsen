@@ -1,5 +1,5 @@
 from enum import Enum
-
+import random
 
 # Classes for the mechanics - Cards
 
@@ -51,10 +51,32 @@ class Card:
 # Deck 
 
 class Deck:
-    pass
+
+    def __init__(self):
+        self.cards: list[Card] = []
+        self.build()
+
+    def build(self):
+        self.cards = [Card(rank,suit) for rank in Rank for suit in Suit]
+    
+    def shuffle(self):
+        random.shuffle(self.cards)
+        return self
+    
+    def deal(self,n=1):
+        if n > len(self.cards):
+            return ValueError(f"Only {len(self.cards)} cards left in the deck.")
+        else:
+            dealt = self.cards[:n]
+            self.cards=self.cards[n:]
+            return dealt
+
+    def __len__(self):
+        return len(self.cards)
+
+    def __repr__(self):
+        return f"Full deck: {self.cards}"
 
 
-king_of_hearts = Card(Rank.KING, Suit.HEARTS)
 
-print(king_of_hearts)
 
