@@ -1,6 +1,7 @@
 from enum import Enum
 import random
 
+
 # Classes for the mechanics - Cards
 
 class Rank(Enum):
@@ -85,10 +86,19 @@ class Deck:
 
 # Players' hands
 
+trump_points= {
+    Suit.SPADES :40 ,
+    Suit.CLUBS :60 ,
+    Suit.DIAMONDS :80 ,
+    Suit.HEARTS :100 
+}
+
+
 class Hand:
 
     def __init__(self):
         self.cards = []
+        
 
     def add(self,cards):
         self.cards.extend(cards)
@@ -106,6 +116,11 @@ class Hand:
     def marriages(self):
         return [suit for suit in Suit if self.has_marriage(suit)]
 
+    def get_limit(self):
+        lim =120
+        for suit in self.marriages():
+            lim += trump_points[suit]
+        return lim
 
     # return the list of cards that can be played
     def legal_moves(self,trump,lead_card= None):

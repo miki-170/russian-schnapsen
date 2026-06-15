@@ -1,2 +1,4 @@
 .venv/
 blackjack.py
+__pycache__/
+

@@ -44,13 +44,13 @@ def main():
         if state.current_player ==0:
             card = get_human_move(state)
             state.play_card(0,card)
-            print(f"\n You played {card}.")
+            print(f"\n You played {card}. This card is {len(state.table)}")
 
         else:
             legal = state.get_legal_moves(1)
             card = random.choice(legal)
             state.play_card(1,card)
-            print(f"\n AI played: {card}")
+            print(f"\n AI played: {card}. This card is {len(state.table)}")
     
     print("Game Over!")
     print(display_state(state))

@@ -1,11 +1,6 @@
-from cards import Card,Deck,Hand,Rank, Suit
+from cards import Card,Deck,Hand,Rank, Suit, trump_points
 
-trump_points= {
-    Suit.SPADES :40 ,
-    Suit.CLUBS :60 ,
-    Suit.DIAMONDS :80 ,
-    Suit.HEARTS :100 
-}
+
 
 class Gamestate:
     
@@ -14,14 +9,14 @@ class Gamestate:
         self.hands = [Hand(),Hand()]    #players' hands
         self.piles = [Hand(),Hand()]    # initial piles
         self.trump_suit = None  # current trump suit
-        self.lead_player = 0    # who starts the round
-        self.starting_player = 0
-        self.current_player = 0 
-        self.table = []
+        self.lead_player = 0    # who starts the trick
+        self.starting_player = 0 # who starts the round
+        self.current_player = 0 # who is currently playing the card
+        self.table = []     # current cards on the table
         self.scores = [0,0] # score in this trick
         self.game_points= [0,0]     # total scores 
         self.phase = 'deal'     # deal -> bid -> play -> finished
-        self.anounced_marriages = []    
+        
 
     def start_new_round(self):
         self.deck = Deck()
@@ -49,7 +44,12 @@ class Gamestate:
         self.piles[1].add(self.deck.deal(2))
         
         
-        self.phase = 'play' #add the bid layer
+        self.phase = 'bid' #add the bid layer
+
+    
+
+    def bid(self,player):
+        pass
 
     def get_legal_moves(self, player):
         lead = self.table[0] if self.table else None
@@ -94,6 +94,8 @@ class Gamestate:
         self.lead_player = winner
 
         if len(self.hands[0])==0:
+            self.game_points[0] += self.scores[0]
+            self.game_points[1] += self.scores[1]
             self.phase = 'finished'
     
 
@@ -116,8 +118,6 @@ class Gamestate:
         return (f"Gamestate(phase = {self.phase}, trump={self.trump_suit}, "
                 f"scores = {self.scores}, turn = P{self.current_player})"
                 )
-
-
 
 
 
