@@ -1,5 +1,5 @@
 from cards import Card,Deck,Hand,Rank, Suit, trump_points
-
+import random
 
 
 class Gamestate:
@@ -9,9 +9,14 @@ class Gamestate:
         self.hands = [Hand(),Hand()]    #players' hands
         self.piles = [Hand(),Hand()]    # initial piles
         self.trump_suit = None  # current trump suit
+
+        self.threshold = 100 # minimum a player starting has to play
+        self.bets = [100,100] # values for the betting round
+
+        self.starting_player = random.choice([0,1]) # who starts the round
         self.lead_player = 0    # who starts the trick
-        self.starting_player = 0 # who starts the round
         self.current_player = 0 # who is currently playing the card
+
         self.table = []     # current cards on the table
         self.scores = [0,0] # score in this trick
         self.game_points= [0,0]     # total scores 
@@ -46,10 +51,26 @@ class Gamestate:
         
         self.phase = 'bid' #add the bid layer
 
-    
+    def legal_bets(self,player,last_bet=100):
+        bets = ['p']
+        if last_bet>= self.hands[player].get_limit():
+            return bets
+        return bets + list(range(last_bet+10,self.hands[player].get_limit()+1,10))
 
-    def bid(self,player):
-        pass
+    def bid(self,player,bet):
+        
+        if player != self.current_player:
+            raise ValueError("It is not your turn!")
+        if 'p' == bet:
+            self.bets[player]=0
+            self.lead_player = 1- player
+            self.current_player = self.lead_player
+        
+        if bet not in self.legal_bets(player,max(self.bets)):
+            raise ValueError("Not a legal bet!")
+        
+        self.bets[player] = bet
+
 
     def get_legal_moves(self, player):
         lead = self.table[0] if self.table else None
@@ -120,4 +141,11 @@ class Gamestate:
                 )
 
 
+
+deck = Deck()
+game = Gamestate()
+
+game.start_new_round()
+
+print(game.legal_bets(0,120))
 
