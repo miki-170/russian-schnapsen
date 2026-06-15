@@ -1,5 +1,11 @@
-from cards import Card,Deck,Hand
+from cards import Card,Deck,Hand,Rank, Suit
 
+trump_points= {
+    Suit.SPADES :40 ,
+    Suit.CLUBS :60 ,
+    Suit.DIAMONDS :80 ,
+    Suit.HEARTS :100 
+}
 
 class Gamestate:
     
@@ -57,6 +63,11 @@ class Gamestate:
         
         if card not in self.get_legal_moves(player):
             raise ValueError("Cannot play this card!")
+        
+        # If you put down marriage it sets the trump suit
+        if len(self.table)==0 and (card.suit in self.hands[player].marriages()) and card.rank in (Rank.KING,Rank.QUEEN):
+            self.trump_suit = card.suit
+            self.scores[player] += trump_points[card.suit]
         
         self.hands[player].remove(card)
         self.table.append(card)
