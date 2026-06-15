@@ -111,7 +111,7 @@ class Hand:
     def legal_moves(self,trump,lead_card= None):
 
         # if you start there is no constraints
-        if lead_card == None:
+        if lead_card is None:
             return list(self.cards)
 
         # following the suit of the top card

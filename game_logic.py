@@ -9,12 +9,11 @@ class Gamestate:
         self.piles = [Hand(),Hand()]    # initial piles
         self.trump_suit = None  # current trump suit
         self.lead_player = 0    # who starts the round
+        self.starting_player = 0
         self.current_player = 0 
-        self.played_card = None
         self.table = []
         self.scores = [0,0] # score in this trick
         self.game_points= [0,0]     # total scores 
-        self.current_player = 0     # 
         self.phase = 'deal'     # deal -> bid -> play -> finished
         self.anounced_marriages = []    
 
@@ -27,12 +26,12 @@ class Gamestate:
         self.hands = [Hand(),Hand()]   
         self.piles = [Hand(),Hand()]  
         self.trump_suit = None
-        self.played_card = None
         self.scores = [0,0]
         self.anounced_marriages = [] 
         self.phase = 'deal'
-        self.lead_player =1 - self.lead_player # takes 1->0 and 0->1
-        self.current_player = self.lead_player
+        self.starting_player =1 - self.starting_player # takes 1->0 and 0->1
+        self.lead_player = self.starting_player
+        self.current_player = self.starting_player
 
         # deal hands 
         self.hands[0].add(self.deck.deal(10))
@@ -43,12 +42,12 @@ class Gamestate:
         self.piles[0].add(self.deck.deal(2))
         self.piles[1].add(self.deck.deal(2))
         
-        # set player 0 as a starting one
-        self.current_player = 0
+        
         self.phase = 'play' #add the bid layer
 
     def get_legal_moves(self, player):
-        return self.hands[player].legal_moves(self.trump_suit,self.played_card)
+        lead = self.table[0] if self.table else None
+        return self.hands[player].legal_moves(self.trump_suit,lead)
     
     # Functions changing the state of the game
 
@@ -78,8 +77,10 @@ class Gamestate:
         points = lead_card.points + follow_card.points
 
         self.scores[winner] += points
+
         self.table =[]
         self.current_player = winner
+        self.lead_player = winner
 
         if len(self.hands[0])==0:
             self.phase = 'finished'
