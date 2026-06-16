@@ -120,7 +120,7 @@ class Hand:
         lim =120
         for suit in self.marriages():
             lim += trump_points[suit]
-        return lim
+        return min(lim,360)
 
     # return the list of cards that can be played
     def legal_moves(self,trump,lead_card= None):
