@@ -102,6 +102,7 @@ class Hand:
 
     def add(self,cards):
         self.cards.extend(cards)
+        self.cards.sort
     
     def remove(self,card):
         self.cards.remove(card)

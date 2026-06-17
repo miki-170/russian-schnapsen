@@ -79,7 +79,7 @@ class Gamestate:
     def choose_pile(self,pile):
         if self.phase != 'pile_selection':
             raise ValueError("Cannot choose a pile now!")
-        chosen = self.piles[pile]
+        chosen = list(self.piles[pile].cards)
         self.hands[self.lead_player].add(chosen)
         self.phase = 'discard'
 
@@ -169,5 +169,7 @@ class Gamestate:
         return (f"Gamestate(phase = {self.phase}, trump={self.trump_suit}, "
                 f"scores = {self.scores}, turn = P{self.current_player})"
                 )
+
+
 
 

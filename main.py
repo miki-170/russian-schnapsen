@@ -8,6 +8,7 @@ def display_state(state):
     print(f"AI hand: {state.hands[1]}.")
     print(f"Score — You: {state.scores[0]}  AI: {state.scores[1]}")
     print(f"Bets - You: {state.bets[0]} AI: {state.bets[1]} ")
+    print(f"Points - You: {state.game_points[0]} AI: {state.game_points[1]}")
     if state.table:
         print(f"Table: {state.table}")
     print("-"*40)
@@ -33,8 +34,10 @@ def get_human_bid(state):
 
 def get_human_move(state):
     legal = state.get_legal_moves(0)
-
-    print("\n Your legal moves:")
+    if state.phase =='discard':
+        print("\n Discard a card:")
+    else:
+        print("\n Your legal moves:")
     for i, card in enumerate(legal):
         print(f"{i}. - {card}")
 
@@ -50,29 +53,12 @@ def get_human_move(state):
             print("Choose a number!")
 
 def AI_discard_at_random(state):
-    cards = []
-    for i in range(2):
-        card = random.choice(state.hands[1])
-        cards.append(card)
-    state.discard(cards)
+    for _ in range(2):
+        card = random.choice(state.hands[1].cards)
+        state.discard(card)
+    
 
-def human_discard(state):
-    
-    print("Your cards:")
-    for j,n in enumerate(state.hands[0]):
-        print(f"\n {j}. - {n}")
-    
-    while True:
-        try:
-            choice =int( input("Choose a card:"))
-            if 0<= choice < len(state.hands[0]):
-                return state.hands[0][choice]
-            else:
-                print("Invalid number, try again!")
 
-        except ValueError: 
-            print("Choose a number!")
-    
 
 def main():
     state = Gamestate()
@@ -99,8 +85,8 @@ def main():
         AI_discard_at_random(state)
     else:
         for _ in range(2):
-            discard = human_discard(state)
-            state.discard([discard])
+            discard = get_human_move(state)
+            state.discard(discard)
     
     while state.phase != 'finished':
         display_state(state)
