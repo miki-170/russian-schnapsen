@@ -132,7 +132,9 @@ class Hand:
 
         # following the suit of the top card
         same_suit = [c for c in self.cards if c.suit == lead_card.suit ]
-
+        suit_better = [c for c in same_suit if c.points > lead_card.points]
+        if suit_better:
+            return suit_better
         if same_suit:
             return same_suit
         

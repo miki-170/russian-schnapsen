@@ -68,6 +68,7 @@ def main():
 
     while state.phase == 'bid':
         if state.current_player == 0:
+            print(f"Your hand: {state.hands[0]}.")
             bet0 = get_human_bid(state)
             state.bid(0,bet0)
             print(f"Your bet is: {bet0}")
@@ -91,6 +92,7 @@ def main():
         for _ in range(2):
             discard = (get_human_move(state))
             state.discard(discard)
+        print(f"Your hand: {state.hands[0]}.")
         bet0 = get_human_bid(state)
         state.bid(0,bet0)
         print(f"You are playing: {bet0}")
