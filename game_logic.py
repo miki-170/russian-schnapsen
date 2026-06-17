@@ -157,7 +157,7 @@ class Gamestate:
                 else: 
                     self.game_points[0] += self.bets[0]
             else:
-                self.game_points[0] -= self.scores[0]
+                self.game_points[0] -= self.bets[0]
             
             if self.scores[1]>= self.bets[1]:
                 if self.bets[1] ==0:
@@ -165,7 +165,7 @@ class Gamestate:
                 else:
                     self.game_points[1] += self.bets[1]
             else:
-                self.game_points[1] -= self.scores[1]
+                self.game_points[1] -= self.bets[1]
 
             self.phase = 'finished'
     

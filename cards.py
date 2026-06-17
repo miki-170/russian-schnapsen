@@ -6,10 +6,10 @@ import random
 
 class Rank(Enum):
     NINE = ("9",0)
-    TEN = ("10",10)
     JACK = ("J",2)
     QUEEN = ("Q",3)
     KING = ("K",4)
+    TEN = ("10",10)
     ACE = ("A",11)
 
     def __init__(self,display,points):
@@ -99,10 +99,12 @@ class Hand:
     def __init__(self):
         self.cards = []
         
+    def sort(self):
+        self.cards.sort(key= lambda c: (c.suit.value , c.rank.points))
 
     def add(self,cards):
         self.cards.extend(cards)
-        self.cards.sort
+        self.sort()
     
     def remove(self,card):
         self.cards.remove(card)
