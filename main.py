@@ -83,11 +83,18 @@ def main():
     
     if state.current_player ==1 :
         AI_discard_at_random(state)
+        legal = state.legal_bets(1,max(state.bets))
+        bet1 =random.choice(legal)
+        state.bid(1,bet1)
+        print(f"AI is playing: {bet1}")
     else:
         for _ in range(2):
-            discard = get_human_move(state)
+            discard = (get_human_move(state))
             state.discard(discard)
-    
+        bet0 = get_human_bid(state)
+        state.bid(0,bet0)
+        print(f"You are playing: {bet0}")
+   
     while state.phase != 'finished':
         display_state(state)
 

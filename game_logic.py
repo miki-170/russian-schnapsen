@@ -8,6 +8,7 @@ class Gamestate:
         self.deck = Deck()  # initialising deck
         self.hands = [Hand(),Hand()]    #players' hands
         self.piles = [Hand(),Hand()]    # initial piles
+        self.discarded = []
         self.trump_suit = None  # current trump suit
 
         self.threshold = 100 # minimum a player starting has to play
@@ -30,7 +31,7 @@ class Gamestate:
 
         # reset all
         self.hands = [Hand(),Hand()]   
-        self.piles = [Hand(),Hand()]  
+        self.piles = [[],[]]  
         self.trump_suit = None
         self.bets = [100,100]
         self.scores = [0,0]
@@ -46,49 +47,59 @@ class Gamestate:
 
         # deal piles
 
-        self.piles[0].add(self.deck.deal(2))
-        self.piles[1].add(self.deck.deal(2))
+        self.piles[0].append(self.deck.deal(2))
+        self.piles[1].append(self.deck.deal(2))
         
         
         self.phase = 'bid' #add the bid layer
 
     def legal_bets(self,player,last_bet=100):
-        bets = [0]
+        if self.phase != 'last_bet':
+            bets = [0]
+        else:
+            bets = [last_bet]
         if last_bet>= self.hands[player].get_limit():
             return bets
         return bets + list(range(last_bet+10,self.hands[player].get_limit()+1,10))
 
     def bid(self,player,bet):
 
-        if self.phase != 'bid':
+        if self.phase not in ['bid','last_bet'] :
             raise ValueError("Now is not the time to bet!")
         if player != self.current_player:
             raise ValueError("It is not your turn!")
+        if bet not in self.legal_bets(player,max(self.bets)):
+            raise ValueError("Not a legal bet!")
+        
         if 0 == bet:
             self.bets[player]=0
             self.lead_player = 1- player
             self.current_player = self.lead_player
             self.phase = 'pile_selection'
         
-        if bet not in self.legal_bets(player,max(self.bets)):
-            raise ValueError("Not a legal bet!")
-        
         self.bets[player] = bet
-        self.current_player = 1 - player
+
+        if self.phase != 'last_bet':
+            self.current_player = 1 - player
+        else:
+            self.phase ='play'
 
     def choose_pile(self,pile):
         if self.phase != 'pile_selection':
             raise ValueError("Cannot choose a pile now!")
-        chosen = list(self.piles[pile].cards)
+        chosen = self.piles[pile][0]
+        self.piles[pile] = []
+        self.discarded = self.piles[1-pile][0]
         self.hands[self.lead_player].add(chosen)
         self.phase = 'discard'
 
     def discard(self,cards):
         if self.phase != 'discard':
-            raise ValueError("Cannot discard now!")
+            raise ValueError("Cannot discard now!")    
         self.hands[self.lead_player].remove(cards)
+        self.discarded.append(cards)
         if len(self.hands[self.lead_player])==10:
-            self.phase = 'play'
+            self.phase = 'last_bet'
 
     def get_legal_moves(self, player):
         lead = self.table[0] if self.table else None
@@ -136,7 +147,10 @@ class Gamestate:
         self.lead_player = winner
 
         if len(self.hands[0])==0:
-
+            # add the points from the pile
+            discarded_points = sum(c.points for c in self.discarded)
+            self.scores[winner] += discarded_points
+            # compare the scores to bets
             if self.scores[0]>= self.bets[0]:
                 self.game_points[0] += self.scores[0]
             else:
