@@ -31,7 +31,7 @@ class Gamestate:
 
         # reset all
         self.hands = [Hand(),Hand()]   
-        self.piles = [[],[]]  
+        self.piles = []  
         self.trump_suit = None
         self.bets = [100,100]
         self.scores = [0,0]
@@ -47,8 +47,8 @@ class Gamestate:
 
         # deal piles
 
-        self.piles[0].append(self.deck.deal(2))
-        self.piles[1].append(self.deck.deal(2))
+        self.piles.append(self.deck.deal(2))
+        self.piles.append(self.deck.deal(2))
         
         
         self.phase = 'bid' #add the bid layer
@@ -87,9 +87,11 @@ class Gamestate:
     def choose_pile(self,pile):
         if self.phase != 'pile_selection':
             raise ValueError("Cannot choose a pile now!")
-        chosen = self.piles[pile][0]
+        chosen = self.piles[pile]
+        print(f"Chosen pile is': {chosen}")
         self.piles[pile] = []
-        self.discarded = self.piles[1-pile][0]
+        self.discarded = self.piles[1-pile]
+        print(self.discarded)
         self.hands[self.lead_player].add(chosen)
         self.phase = 'discard'
 
