@@ -125,7 +125,7 @@ def main():
 
                 state.play_card(1,card)
 
-        print("Game Over!")
+        print("Round Over!")
         display_state(state)
 
     if state.game_points[0] > state.game_points[1]:
