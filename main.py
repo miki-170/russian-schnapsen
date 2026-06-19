@@ -62,58 +62,78 @@ def AI_discard_at_random(state):
 
 def main():
     state = Gamestate()
-    state.start_new_round()
-
     print("Start!")
+    
+    while max(state.game_points)<1000:
+        
+        state.start_new_round()
 
-    while state.phase == 'bid':
-        if state.current_player == 0:
-            print(f"Your hand: {state.hands[0]}.")
-            bet0 = get_human_bid(state)
-            state.bid(0,bet0)
-            print(f"Your bet is: {bet0}")
-            continue
-        if state.current_player ==1:
+
+
+        while state.phase == 'bid':
+            if state.current_player == 0:
+                print(f"Your hand: {state.hands[0]}.")
+                bet0 = get_human_bid(state)
+                state.bid(0,bet0)
+                print(f"Your bet is: {bet0}")
+                continue
+            if state.current_player ==1:
+                legal = state.legal_bets(1,max(state.bets))
+                bet1 =random.choice(legal)
+                state.bid(1,bet1)
+                print(f"AI's bet is: {bet1}")
+                continue
+
+        state.choose_pile(random.choice([0,1]))
+
+        if state.current_player ==1 :
+            AI_discard_at_random(state)
             legal = state.legal_bets(1,max(state.bets))
             bet1 =random.choice(legal)
             state.bid(1,bet1)
-            print(f"AI's bet is: {bet1}")
-            continue
-    
-    state.choose_pile(random.choice([0,1]))
-    
-    if state.current_player ==1 :
-        AI_discard_at_random(state)
-        legal = state.legal_bets(1,max(state.bets))
-        bet1 =random.choice(legal)
-        state.bid(1,bet1)
-        print(f"AI is playing: {bet1}")
-    else:
-        for _ in range(2):
-            discard = (get_human_move(state))
-            state.discard(discard)
-        print(f"Your hand: {state.hands[0]}.")
-        bet0 = get_human_bid(state)
-        state.bid(0,bet0)
-        print(f"You are playing: {bet0}")
-   
-    while state.phase != 'finished':
+            print(f"AI is playing: {bet1}")
+        else:
+            for _ in range(2):
+                discard = (get_human_move(state))
+                state.discard(discard)
+            print(f"Your hand: {state.hands[0]}.")
+            bet0 = get_human_bid(state)
+            state.bid(0,bet0)
+            print(f"You are playing: {bet0}")
+
+        while state.phase != 'finished':
+            display_state(state)
+
+            if state.current_player ==0:
+                card = get_human_move(state)
+                
+                if len(state.table) ==1:
+                    print(f"\n You responded with {card}.")
+                else:
+                    print(f"\n You started with {card}.")
+                
+                state.play_card(0,card)
+
+            else:
+                legal = state.get_legal_moves(1)
+                card = random.choice(legal)
+                
+                if len(state.table) ==1:
+                    print(f"\n AI responded with {card}.")
+                else:
+                    print(f"\n AI started with {card}.")
+
+                state.play_card(1,card)
+
+        print("Game Over!")
         display_state(state)
 
-        if state.current_player ==0:
-            card = get_human_move(state)
-            state.play_card(0,card)
-            print(f"\n You played {card}. This card is {len(state.table)}")
-
-        else:
-            legal = state.get_legal_moves(1)
-            card = random.choice(legal)
-            state.play_card(1,card)
-            print(f"\n AI played: {card}. This card is {len(state.table)}")
+    if state.game_points[0] > state.game_points[1]:
+        print(f"Player 0 won!")
+    else:
+        print(f"Player 1 won!")
     
-    print("Game Over!")
-    print(display_state(state))
-
+    
 
 if __name__ == "__main__":
     main()

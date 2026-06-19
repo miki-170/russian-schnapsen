@@ -7,11 +7,10 @@ class Gamestate:
     def __init__(self):
         self.deck = Deck()  # initialising deck
         self.hands = [Hand(),Hand()]    #players' hands
-        self.piles = [Hand(),Hand()]    # initial piles
+        self.piles = []    # initial piles
         self.discarded = []
         self.trump_suit = None  # current trump suit
 
-        self.threshold = 100 # minimum a player starting has to play
         self.bets = [100,100] # values for the betting round
 
         self.starting_player = random.choice([0,1]) # who starts the round
@@ -26,17 +25,24 @@ class Gamestate:
 
     def start_new_round(self):
         self.deck = Deck()
+
+        self.phase = 'deal'
         # shuffle the deck
         self.deck.shuffle()
 
         # reset all
         self.hands = [Hand(),Hand()]   
         self.piles = []  
+        self.discarded = []
+        self.table = []
+        
+        self.anounced_marriages = [] 
         self.trump_suit = None
+
         self.bets = [100,100]
         self.scores = [0,0]
-        self.anounced_marriages = [] 
-        self.phase = 'deal'
+        
+        
         self.starting_player =1 - self.starting_player # takes 1->0 and 0->1
         self.lead_player = self.starting_player
         self.current_player = 1 - self.starting_player
@@ -91,7 +97,6 @@ class Gamestate:
         print(f"Chosen pile is': {chosen}")
         self.piles[pile] = []
         self.discarded = self.piles[1-pile]
-        print(self.discarded)
         self.hands[self.lead_player].add(chosen)
         self.phase = 'discard'
 
@@ -153,16 +158,19 @@ class Gamestate:
             discarded_points = sum(c.points for c in self.discarded)
             self.scores[winner] += discarded_points
             # compare the scores to bets
+
+            # Calculating scores for Player 0
             if self.scores[0]>= self.bets[0]:
-                if self.bets[0] ==0:
+                if self.bets[0] ==0 and self.game_points[0]<800:
                     self.game_points[0] += self.scores[0]
                 else: 
                     self.game_points[0] += self.bets[0]
             else:
                 self.game_points[0] -= self.bets[0]
             
+            # Calculating scores for Player 1
             if self.scores[1]>= self.bets[1]:
-                if self.bets[1] ==0:
+                if self.bets[1] ==0 and self.game_points[0]<800: # Player cannot score if he didnt win betting and has more than 800
                     self.game_points[1] += self.scores[1]
                 else:
                     self.game_points[1] += self.bets[1]
