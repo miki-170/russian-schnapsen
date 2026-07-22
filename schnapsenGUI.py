@@ -17,6 +17,7 @@ class GameGUI:
         self.state.start_new_round()
         self.card_boxes = {}
         self.button_rects = {}
+        self.pile_rects= {}
         
         self.x = self.screen.get_size()[0]
         self.y = self.screen.get_size()[1]
@@ -41,43 +42,55 @@ class GameGUI:
                     running = False
 
                 if event.type == pygame.MOUSEBUTTONDOWN:
-                    if self.state.phase == 'bid':
+                    
+                    if self.state.phase== 'bid':
                         self._handle_bet(event.pos)
-                    try:
+                    elif self.state.phase == 'pile_selection':
+                        self._chosing_pile(event.pos)
+                    else:
                         self.handle_click(event.pos)
                         
-                    except Exception as e:
-                        self.error_message = str(e)
-                        self.error_time = pygame.time.get_ticks()
-
-            if self.error_time and pygame.time.get_ticks() - self.error_time >2000:
-                self.error_message = None
-                self.error_time = None
-                
+            
+            
             self.draw()
 
+            if self.state.phase == 'finished':
+                self.state.start_new_round()
+
+            if self.state.phase == 'play':
+                self.ai_move()
+
+            if self.state.phase == 'discard':
+                self.ai_discard()
+
             # Section for betting 
-            self.ai_bets()
+            if self.state.phase=='bid' or self.state.phase=='last_bet':
+                self.ai_bets()
 
-            if self.error_message:
-                self._draw_error(self.error_message)
+            if self.state.phase == 'pile_selection':
+                self.ai_pile_select()
 
+            
+
+
+            
             # renders the game
             pygame.display.flip()
 
             if self.player==False:
-                pygame.time.delay(800)
+                pygame.time.delay(1000)
 
             # limits fps to 60
             self.clock.tick(60)
 
         pygame.quit()
 
-
-
     def _load_images(self):
         names = { "9":"9","10":"10",'J':"jack",'Q':'queen','K':'king','A':'ace'}
         self.card_images = {}
+
+        self.card_back = pygame.image.load("cards/card_back.png")
+        self.card_back = pygame.transform.scale(self.card_back,(self.card_x_size,self.card_y_size))
 
         for suit in Suit:
             for rank in Rank:
@@ -90,19 +103,43 @@ class GameGUI:
                 except:
                     raise FileNotFoundError("File path doesn't exist")
 
-    def _draw_error(self, message):
-    
-        # white error text on top
-        font = pygame.font.SysFont(None, 32)
-        text = font.render(f"Error: {message}", True, (255, 255, 255))
-        self.screen.blit(text, (self.x/5, self.y/2))
-
     def ai_bets(self):
-        if self.state.current_player==1 and self.state.phase=='bid':
+        if self.state.current_player==1:
             self.state.bid(1,random_bet(self.state.legal_bets(1,max(self.state.bets))))
-        if self.state.current_player==0 and self.state.phase=='bid' and self.player==False:
+        if self.state.current_player==0 and (self.state.phase=='bid' or self.state.phase == 'last_bet') and self.player==False:
             self.state.bid(0,random_bet(self.state.legal_bets(0,max(self.state.bets))))
+
+    def ai_move(self):
+        if self.state.current_player==1:
+            legal = self.state.get_legal_moves(1)
+            card = choice(legal)
+            self.state.play_card(1,card)
+        
+        elif self.state.current_player==0 and self.state.phase=='play' and self.player==False:
             
+            legal = self.state.get_legal_moves(0)
+            card = choice(legal)
+            self.state.play_card(0,card)
+
+    def ai_discard(self):
+        if self.state.current_player==1:
+            card = choice(self.state.hands[1].cards)
+            self.state.discard(card)
+
+        if self.state.current_player==0 and self.state.phase=='discard' and self.player==False:
+            card = choice(self.state.hands[0].cards)
+            self.state.discard(card)
+
+    def ai_pile_select(self):
+        if self.state.current_player==1:
+            pile = choice([0,1])
+            self.state.chosen_pile = pile
+            self.state.choose_pile(pile)
+        
+        if self.state.current_player==0 and self.state.phase=='pile_selection' and self.player==False:
+            pile = choice([0,1])
+            self.state.chosen_pile = pile
+            self.state.choose_pile(pile)
 
     def draw_pop_up(self):
 
@@ -165,6 +202,7 @@ class GameGUI:
         self.draw_ai(not self.player)
         self.draw_piles()
         self.draw_scores()
+        self.draw_table()
         
     def handle_click(self, pos):
         self.error_message = None
@@ -186,20 +224,39 @@ class GameGUI:
                     if bet!= 0:
                         self.state.bid(1,random_bet(self.state.legal_bets(1,max(self.state.bets))))
 
-    def ai_move(self):
-        legal = self.state.get_legal_moves(1)
-        card = choice(legal)
-        self.state.play_card(1,card)
-
     def draw_piles(self):
+        self.pile_rects= {}
         for i, pile in enumerate(self.state.piles):
+            pile_rect = None
             for j,card in enumerate(pile):
                 x = (5+80*i)/100 *self.x + self.card_x_size/2*j
                 y = self.y/3
+                
+                if i == self.state.chosen_pile :
+                    if j<2:
+                        image = self.card_images[(card.suit, card.rank)]
+                        image = pygame.transform.scale(image,(self.card_x_size,self.card_y_size))
+                        self.screen.blit(image,(x,y))
+                
+                else:
+                    
+                    image = self.card_back
+                    self.screen.blit(image,(x,y))
 
-                image = self.card_images[(card.suit, card.rank)]
-                image = pygame.transform.scale(image,(self.card_x_size,self.card_y_size))
-                self.screen.blit(image,(x,y))
+                    if self.state.phase == 'pile_selection':
+                        card_rect = pygame.Rect(x, y, self.card_x_size, self.card_y_size)
+                        if pile_rect is None:
+                            pile_rect = card_rect
+                        else:
+                            pile_rect = pile_rect.union(card_rect)
+                        self.pile_rects[i] = pile_rect
+                
+    def _chosing_pile(self,pos):
+        if self.state.phase == 'pile_selection' and self.state.current_player==0:
+            for pile, rect in self.pile_rects.items():
+                if rect.collidepoint(pos):
+                    self.state.chosen_pile = pile
+                    self.state.choose_pile(pile)
 
     def draw_hand(self):
         
@@ -207,42 +264,67 @@ class GameGUI:
 
         hand = self.state.hands[0]
 
+        count = len(hand)
+        
+
+
         for i, card in enumerate(hand.cards):
-            x = 0.065* self.x+ i * 0.09 * self.x
+            x = 0.005* self.x * (i+1) + i * self.card_x_size
             y = 550/700 * self.y
             
             image = self.card_images[(card.suit, card.rank)]
             image = pygame.transform.scale(image,(self.card_x_size,self.card_y_size))
             self.screen.blit(image,(x,y))
             
-            if self.state.phase == 'play':
+            if self.state.phase == 'play' or (self.state.phase == 'discard' and self.state.current_player==0):
                 self.card_boxes[card] = pygame.Rect(x,y,self.card_x_size,self.card_y_size)
 
     def draw_ai(self,show:bool):
         
         hand = self.state.hands[1]
 
-        # also add an option to draw all the cards
-
         for i, card in enumerate(hand.cards):
             if show == False:
-                image = pygame.image.load("cards/card_back.png")
-                image = pygame.transform.scale(image,(self.card_x_size,self.card_y_size))
+                image = self.card_back
             else:
                 image = self.card_images[(card.suit, card.rank)]
                 image = pygame.transform.scale(image,(self.card_x_size,self.card_y_size))
 
-            x = 0.065 * self.x + i * 0.09 * self.x
+            x = 0.005* self.x * (i+1) + i * self.card_x_size
             y = 50/700 * self.y
             self.screen.blit(image,(x,y))
-            self.card_boxes[card] = pygame.Rect(x,y,self.card_x_size,self.card_y_size)
-                
+            #self.card_boxes[card] = pygame.Rect(x,y,self.card_x_size,self.card_y_size)
+
+    def draw_table(self):
+        table = self.state.table
+
+        if len(table)==0:
+            return 
+        print(table)
+        print(len(self.state.hands[0].cards))
+        print(len(self.state.hands[1].cards))
+        print()
+        
+        center_x = self.x // 2
+        center_y = self.y // 2
+        gap = 10
+
+        total_width = self.card_x_size * 2 + gap
+        x = center_x - total_width // 2
+        y = center_y - self.card_y_size // 2
+
+        for i, cards in enumerate(table):
+            self.screen.blit(self.card_images[(cards.suit, cards.rank)], (x + i * (self.card_x_size + gap),y))
+
     def draw_scores(self):
+        leader = self.state.bets.index(max(self.state.bets))
         font = pygame.font.SysFont(None, 30)
-        text = font.render(f"Turn: {self.state.current_player}; You: {self.state.scores[0]}, Bet: {self.state.bets[0]}  AI: {self.state.scores[1]}, Bet: {self.state.bets[1]}",True,(255,255,255))
-        self.screen.blit(text,(20,20))
+        text = font.render(f"Turn: {self.state.current_player}; Phase: {self.state.phase}; Total score: {self.state.game_points[0]} : {self.state.game_points[1]}",True,(255,255,255))
+        self.screen.blit(text,(20,5))
+        text = font.render(f"You: {self.state.scores[0]},  AI: {self.state.scores[1]}, Bet: {max(self.state.bets)} on {leader}. Trump: {self.state.trump_suit} ",True,(255,255,255))
+        self.screen.blit(text,(20,30))
 
 game = GameGUI()
-#game.player = False
+game.player = False
 game.run()
 

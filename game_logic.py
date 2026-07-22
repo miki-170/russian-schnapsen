@@ -7,10 +7,11 @@ class Gamestate:
     def __init__(self):
         self.deck = Deck()  # initialising deck
         self.hands = [Hand(),Hand()]    #players' hands
-        self.piles = []    # initial piles
-        self.discarded = []
+        self.piles = [[],[]]  
+        self.chosen_pile = None
         self.trump_suit = None  # current trump suit
-
+        self.discard_holder = []
+        
         self.bets = [100,100] # values for the betting round
 
         self.starting_player = random.choice([0,1]) # who starts the round
@@ -22,7 +23,6 @@ class Gamestate:
         self.game_points= [0,0]     # total scores 
         self.phase = 'deal'     # deal -> bid -> play -> finished
         
-
     def start_new_round(self):
         self.deck = Deck()
 
@@ -32,9 +32,10 @@ class Gamestate:
 
         # reset all
         self.hands = [Hand(),Hand()]   
-        self.piles = []  
-        self.discarded = []
+        self.piles = [[],[]]
+        self.chosen_pile = None
         self.table = []
+        self.discard_holder = []
         
         self.anounced_marriages = [] 
         self.trump_suit = None
@@ -53,8 +54,8 @@ class Gamestate:
 
         # deal piles
 
-        self.piles.append(self.deck.deal(2))
-        self.piles.append(self.deck.deal(2))
+        self.piles[0] = (self.deck.deal(2))
+        self.piles[1] = (self.deck.deal(2))
         
         
         self.phase = 'bid' #add the bid layer
@@ -93,10 +94,8 @@ class Gamestate:
     def choose_pile(self,pile):
         if self.phase != 'pile_selection':
             raise ValueError("Cannot choose a pile now!")
+        self.chosen_pile = pile
         chosen = self.piles[pile]
-        print(f"Chosen pile is': {chosen}")
-        self.piles[pile] = []
-        self.discarded = self.piles[1-pile]
         self.hands[self.lead_player].add(chosen)
         self.phase = 'discard'
 
@@ -104,8 +103,10 @@ class Gamestate:
         if self.phase != 'discard':
             raise ValueError("Cannot discard now!")    
         self.hands[self.lead_player].remove(cards)
-        self.discarded.append(cards)
+        self.discard_holder.append(cards)
         if len(self.hands[self.lead_player])==10:
+            self.piles[self.chosen_pile] = self.discard_holder
+            self.chosen_pile = None
             self.phase = 'last_bet'
 
     def get_legal_moves(self, player):
@@ -124,20 +125,23 @@ class Gamestate:
         if card not in self.get_legal_moves(player):
             raise ValueError("Cannot play this card!")
         
+
+
         # If you put down marriage it sets the trump suit
         if len(self.table)==0 and (card.suit in self.hands[player].marriages()) and card.rank in (Rank.KING,Rank.QUEEN):
             self.trump_suit = card.suit
             self.scores[player] += trump_points[card.suit]
         
         self.hands[player].remove(card)
+        
+        if len(self.table) >1:
+            self.table =[]
         self.table.append(card)
     
         if len(self.table) == 1:
             self.current_player = 1 -player
         else:
             self._resolve_trick()
-
-
     
     def _resolve_trick(self):
 
@@ -149,13 +153,15 @@ class Gamestate:
 
         self.scores[winner] += points
 
-        self.table =[]
+        
         self.current_player = winner
         self.lead_player = winner
 
-        if len(self.hands[0])==0:
+        if len(self.hands[0])==0 and len(self.hands[1])==0:
             # add the points from the pile
-            discarded_points = sum(c.points for c in self.discarded)
+            discarded_points = 0
+            for i in range(2):
+                discarded_points += sum(c.points for c in self.piles[i])
             self.scores[winner] += discarded_points
             # compare the scores to bets
 
@@ -178,7 +184,6 @@ class Gamestate:
                 self.game_points[1] -= self.bets[1]
 
             self.phase = 'finished'
-    
 
     def _trick_winner(self,lead,follow):
         lead_trump = lead.suit == self.trump_suit
