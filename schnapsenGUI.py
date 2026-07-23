@@ -1,7 +1,6 @@
 import pygame
 from game_logic import Gamestate
 from cards import Suit, Rank
-from random import choice
 from ai_logic import ai_random
 
 class GameGUI:
