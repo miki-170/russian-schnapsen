@@ -126,10 +126,10 @@ class Hand:
         return min(lim,360)
 
     # return the list of cards that can be played
-    def legal_moves(self,trump,lead_card= None):
+    def legal_moves(self,trump,count,lead_card= None):
 
         # if you start there is no constraints
-        if lead_card is None:
+        if lead_card is None or count ==2:
             return list(self.cards)
 
         # following the suit of the top card

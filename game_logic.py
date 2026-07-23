@@ -111,7 +111,8 @@ class Gamestate:
 
     def get_legal_moves(self, player):
         lead = self.table[0] if self.table else None
-        return self.hands[player].legal_moves(self.trump_suit,lead)
+        cards_table = len(self.table)
+        return self.hands[player].legal_moves(self.trump_suit,cards_table,lead)
     
     # Functions changing the state of the game
 
@@ -128,7 +129,7 @@ class Gamestate:
 
 
         # If you put down marriage it sets the trump suit
-        if len(self.table)==0 and (card.suit in self.hands[player].marriages()) and card.rank in (Rank.KING,Rank.QUEEN):
+        if (len(self.table) != 1) and (card.suit in self.hands[player].marriages()) and card.rank in (Rank.KING,Rank.QUEEN):
             self.trump_suit = card.suit
             self.scores[player] += trump_points[card.suit]
         

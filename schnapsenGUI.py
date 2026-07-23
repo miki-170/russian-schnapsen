@@ -2,7 +2,8 @@ import pygame
 from game_logic import Gamestate
 from cards import Suit, Rank
 from random import choice
-from ai_logic import random_bet
+from ai_logic import ai_random
+
 class GameGUI:
     
     def __init__(self):
@@ -43,10 +44,13 @@ class GameGUI:
 
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     
-                    if self.state.phase== 'bid':
-                        self._handle_bet(event.pos)
+                    if self.state.phase== 'bid' or self.state.phase== 'last_bet':
+                        self.handle_bet(event.pos)
                     elif self.state.phase == 'pile_selection':
-                        self._chosing_pile(event.pos)
+                        self.chosing_pile(event.pos)
+                    elif self.state.phase == 'discard':
+                        self.handle_discard(event.pos)
+
                     else:
                         self.handle_click(event.pos)
                         
@@ -58,22 +62,18 @@ class GameGUI:
                 self.state.start_new_round()
 
             if self.state.phase == 'play':
-                self.ai_move()
+                ai_random.ai_move(0,self)
 
             if self.state.phase == 'discard':
-                self.ai_discard()
+                ai_random.ai_discard(0,self)
 
             # Section for betting 
             if self.state.phase=='bid' or self.state.phase=='last_bet':
-                self.ai_bets()
+                ai_random.ai_bets(0,self)
 
             if self.state.phase == 'pile_selection':
-                self.ai_pile_select()
+                ai_random.ai_pile_select(0,self)
 
-            
-
-
-            
             # renders the game
             pygame.display.flip()
 
@@ -102,44 +102,6 @@ class GameGUI:
                     self.card_images[(suit,rank)] = image
                 except:
                     raise FileNotFoundError("File path doesn't exist")
-
-    def ai_bets(self):
-        if self.state.current_player==1:
-            self.state.bid(1,random_bet(self.state.legal_bets(1,max(self.state.bets))))
-        if self.state.current_player==0 and (self.state.phase=='bid' or self.state.phase == 'last_bet') and self.player==False:
-            self.state.bid(0,random_bet(self.state.legal_bets(0,max(self.state.bets))))
-
-    def ai_move(self):
-        if self.state.current_player==1:
-            legal = self.state.get_legal_moves(1)
-            card = choice(legal)
-            self.state.play_card(1,card)
-        
-        elif self.state.current_player==0 and self.state.phase=='play' and self.player==False:
-            
-            legal = self.state.get_legal_moves(0)
-            card = choice(legal)
-            self.state.play_card(0,card)
-
-    def ai_discard(self):
-        if self.state.current_player==1:
-            card = choice(self.state.hands[1].cards)
-            self.state.discard(card)
-
-        if self.state.current_player==0 and self.state.phase=='discard' and self.player==False:
-            card = choice(self.state.hands[0].cards)
-            self.state.discard(card)
-
-    def ai_pile_select(self):
-        if self.state.current_player==1:
-            pile = choice([0,1])
-            self.state.chosen_pile = pile
-            self.state.choose_pile(pile)
-        
-        if self.state.current_player==0 and self.state.phase=='pile_selection' and self.player==False:
-            pile = choice([0,1])
-            self.state.chosen_pile = pile
-            self.state.choose_pile(pile)
 
     def draw_pop_up(self):
 
@@ -183,20 +145,24 @@ class GameGUI:
                 text_rect = text.get_rect(center=btn_rect.center)
                 self.screen.blit(text, text_rect)
                 
-        
-        text = font_btn.render("Pass",True,(0,0,0))
+        if self.state.phase =='bid':   
+            color = (0,0,0)
+        else:
+            color =(128,128,128)
+        text = font_btn.render("Pass",True,color)
         pass_rect = pygame.Rect(popup_x, btn_y + button_height, popup_width,button_height )
 
         # position text rectangle with a centre in the bigger rectangle
         text_rect = text.get_rect(center= pass_rect.center)
-        self.screen.blit(text, text_rect)
+        self.screen.blit(text, text_rect)  
 
-        self.button_rects[0] = pass_rect
+        if self.state.phase =='bid':   
+            self.button_rects[0] = pass_rect
 
     def draw(self):
         # fills the background with poker green
         self.screen.fill((53, 101, 77))
-        if self.state.phase=='bid' and self.state.current_player==0 and self.player==True:
+        if (self.state.phase=='bid' or self.state.phase=='last_bet') and self.state.current_player==0 and self.player==True:
                 self.draw_pop_up()
         self.draw_hand()
         self.draw_ai(not self.player)
@@ -213,16 +179,19 @@ class GameGUI:
                     legal = self.state.get_legal_moves(0)
                     if card in legal:
                         self.state.play_card(0,card)
-                        self.ai_move()
                     break
         
-    def _handle_bet(self,pos):
-        if self.state.phase == 'bid' and self.state.current_player==0:
+    def handle_bet(self,pos):
+        if (self.state.phase == 'bid' or self.state.phase == 'last_bet') and self.state.current_player==0:
             for bet, rect in self.button_rects.items():
                 if rect.collidepoint(pos):
                     self.state.bid(0,bet)
-                    if bet!= 0:
-                        self.state.bid(1,random_bet(self.state.legal_bets(1,max(self.state.bets))))
+
+    def handle_discard(self,pos):
+        if self.state.phase == 'discard' and self.state.current_player==0:
+            for card, rect in self.card_boxes.items():
+                if rect.collidepoint(pos):
+                    self.state.discard(card)
 
     def draw_piles(self):
         self.pile_rects= {}
@@ -251,7 +220,7 @@ class GameGUI:
                             pile_rect = pile_rect.union(card_rect)
                         self.pile_rects[i] = pile_rect
                 
-    def _chosing_pile(self,pos):
+    def chosing_pile(self,pos):
         if self.state.phase == 'pile_selection' and self.state.current_player==0:
             for pile, rect in self.pile_rects.items():
                 if rect.collidepoint(pos):
@@ -266,8 +235,6 @@ class GameGUI:
 
         count = len(hand)
         
-
-
         for i, card in enumerate(hand.cards):
             x = 0.005* self.x * (i+1) + i * self.card_x_size
             y = 550/700 * self.y
@@ -321,6 +288,6 @@ class GameGUI:
         self.screen.blit(text,(20,30))
 
 game = GameGUI()
-game.player = False
+#game.player = False
 game.run()
 
