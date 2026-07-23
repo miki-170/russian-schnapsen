@@ -300,10 +300,6 @@ class GameGUI:
 
         if len(table)==0:
             return 
-        print(table)
-        print(len(self.state.hands[0].cards))
-        print(len(self.state.hands[1].cards))
-        print()
         
         center_x = self.x // 2
         center_y = self.y // 2
