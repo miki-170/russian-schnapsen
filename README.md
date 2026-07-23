@@ -60,7 +60,7 @@ pip install pygame
 ## Running the game
 
 ```bash
-python schnapsenGUI.py
+python main.py
 ```
 
 ## How to play

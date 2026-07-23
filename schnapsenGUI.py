@@ -285,8 +285,3 @@ class GameGUI:
         self.screen.blit(text,(20,5))
         text = font.render(f"You: {self.state.scores[0]},  AI: {self.state.scores[1]}, Bet: {max(self.state.bets)} on {leader}. Trump: {self.state.trump_suit} ",True,(255,255,255))
         self.screen.blit(text,(20,30))
-
-game = GameGUI()
-#game.player = False
-game.run()
-
