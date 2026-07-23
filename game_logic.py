@@ -20,10 +20,11 @@ class Gamestate:
 
         self.table = []     # current cards on the table
         self.scores = [0,0] # score in this trick
+        self.points = [0,0]
         self.game_points= [0,0]     # total scores 
         self.phase = 'deal'     # deal -> bid -> play -> finished
-        
-    def start_new_round(self):
+
+    def start_new_round(self,new_game:bool):
         self.deck = Deck()
 
         self.phase = 'deal'
@@ -42,6 +43,8 @@ class Gamestate:
 
         self.bets = [100,100]
         self.scores = [0,0]
+        if new_game == True:
+            self.game_points = [0,0]
         
         
         self.starting_player =1 - self.starting_player # takes 1->0 and 0->1
@@ -185,6 +188,11 @@ class Gamestate:
                 self.game_points[1] -= self.bets[1]
 
             self.phase = 'finished'
+
+            if max(self.game_points)>=1000:
+                winner  = self.game_points.index(max(self.game_points))
+                self.points[winner] += 1
+                self.phase = 'game_over'
 
     def _trick_winner(self,lead,follow):
         lead_trump = lead.suit == self.trump_suit

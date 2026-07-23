@@ -14,10 +14,11 @@ class GameGUI:
 
         self.state = Gamestate()
         self.player = True
-        self.state.start_new_round()
+        self.state.start_new_round(1)
         self.card_boxes = {}
         self.button_rects = {}
         self.pile_rects= {}
+        self.end_btns = {}
         
         self.x = self.screen.get_size()[0]
         self.y = self.screen.get_size()[1]
@@ -29,8 +30,6 @@ class GameGUI:
     
     def run(self):
         running = True
-        self.error_message = None
-        self.error_time = None
 
         while running:
             self.x = self.screen.get_size()[0]
@@ -49,16 +48,22 @@ class GameGUI:
                         self.chosing_pile(event.pos)
                     elif self.state.phase == 'discard':
                         self.handle_discard(event.pos)
-
+                    elif self.state.phase == 'game_over':
+                        end = self.handle_end(event.pos)
+                        if end == 0:
+                            running = False
+                        elif end ==1:
+                            self.state.start_new_round(1)
                     else:
                         self.handle_click(event.pos)
                         
-            
-            
             self.draw()
 
+            if self.state.phase == 'game_over' and self.player == False:
+                self.state.start_new_round(1)
+
             if self.state.phase == 'finished':
-                self.state.start_new_round()
+                self.state.start_new_round(0)
 
             if self.state.phase == 'play':
                 ai_random.ai_move(0,self)
@@ -168,9 +173,10 @@ class GameGUI:
         self.draw_piles()
         self.draw_scores()
         self.draw_table()
+        if self.state.phase =='game_over' and self.player==True:
+            self.game_over()     
         
     def handle_click(self, pos):
-        self.error_message = None
 
         if self.state.phase=='play' and self.state.current_player==0:
             for card, rect in self.card_boxes.items():
@@ -180,6 +186,15 @@ class GameGUI:
                         self.state.play_card(0,card)
                     break
         
+    def handle_end(self,pos):
+        if self.state.phase == 'game_over':
+            for btn, rect in self.end_btns.items():
+                if rect.collidepoint(pos):
+                    if btn == 'exit':
+                        return 0
+                    elif btn =='new_game':
+                        return 1
+
     def handle_bet(self,pos):
         if (self.state.phase == 'bid' or self.state.phase == 'last_bet') and self.state.current_player==0:
             for bet, rect in self.button_rects.items():
@@ -281,7 +296,55 @@ class GameGUI:
     def draw_scores(self):
         leader = self.state.bets.index(max(self.state.bets))
         font = pygame.font.SysFont(None, 30)
-        text = font.render(f"Turn: {self.state.current_player}; Phase: {self.state.phase}; Total score: {self.state.game_points[0]} : {self.state.game_points[1]}",True,(255,255,255))
+        text = font.render(f"Turn: {self.state.current_player}; Phase: {self.state.phase}; Total score: {self.state.game_points[0]} : {self.state.game_points[1]}; Results: {self.state.points[0]} :  {self.state.points[1]} ",True,(255,255,255))
         self.screen.blit(text,(20,5))
         text = font.render(f"You: {self.state.scores[0]},  AI: {self.state.scores[1]}, Bet: {max(self.state.bets)} on {leader}. Trump: {self.state.trump_suit} ",True,(255,255,255))
         self.screen.blit(text,(20,30))
+
+    def game_over(self):
+        
+        self.end_btns = {}
+
+        popup_x = self.x//3
+        popup_y = self.y//3
+        popup_width = int(self.x * 0.4)
+        popup_height = int(self.y* 0.3)
+
+        pop_up_rect = pygame.Rect(popup_x,popup_y,popup_width,popup_height)
+
+        pygame.draw.rect(self.screen,(255,255,255),pop_up_rect)
+
+        # black border
+        pygame.draw.rect(self.screen, (0, 0, 0), pop_up_rect, 2)
+
+        font_over = pygame.font.SysFont(None, 32 * self.x//1000 )
+
+        winner = self.state.game_points.index(max(self.state.game_points))
+
+        text = font_over.render(f"Player {winner} won!",True,(0,0,0))
+
+        main_rect = pygame.Rect(popup_x,popup_y,popup_width,popup_height // 4 * 3 )
+        pygame.draw.rect(self.screen, (0, 0, 0), main_rect, 2)
+
+        text_rect = text.get_rect(center = main_rect.center)
+        self.screen.blit(text, text_rect)
+
+        # exit button 
+        exit_rect = pygame.Rect(popup_x,popup_y + popup_height // 4 * 3, popup_width//2, popup_height - popup_height // 4 * 3 )
+
+        text = font_over.render("Exit",True,(0,0,0))
+        pygame.draw.rect(self.screen,(0,0,0),exit_rect ,2)
+
+        exit_text_rect = text.get_rect(center = exit_rect.center)
+        self.screen.blit(text , exit_text_rect)
+
+        # New Game Button
+        new_game_rect = pygame.Rect(popup_x + popup_width//2,popup_y + popup_height // 4 * 3, popup_width//2, popup_height - popup_height // 4 * 3 )
+
+        text = font_over.render("New Game",True,(0,0,0))
+        pygame.draw.rect(self.screen,(0,0,0),new_game_rect ,2)
+
+        new_game_text_rect = text.get_rect(center = new_game_rect.center)
+        self.screen.blit(text , new_game_text_rect)
+
+        self.end_btns = {"exit" : exit_rect ,"new_game" : new_game_rect}
