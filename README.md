@@ -4,6 +4,10 @@ A Python implementation of Russian Schnapsen (Polish variant), featuring a full
 game engine, a pygame graphical interface, and (in progress) a reinforcement
 learning agent trained through self-play.
 
+Cards come from: 
+- https://opengameart.org/content/playing-cards-vector-png
+- https://commons.wikimedia.org/wiki/File:Reverso_baraja_española.svg
+
 ## About the game
 
 Russian Schnapsen is a trick-taking card game played with a 24-card deck
